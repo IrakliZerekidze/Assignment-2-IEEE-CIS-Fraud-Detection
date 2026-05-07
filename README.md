@@ -49,8 +49,7 @@ Train model
 
 * ძირითადად გამოვიყენე `0.98` threshold
 * სვეტები, რომლებშიც 98%-ზე მეტი მნიშვნელობა იყო დაკარგული, მოდელისთვის პრაქტიკულად არაინფორმატიული აღმოჩნდა
-
-Feature Cleaning განსაკუთრებით ეფექტური აღმოჩნდა XGBoost-ზე.
+* ვცადე სხვა threshold-ებიც თუმცა ყველაზე წარმატებული ეს აღმოჩნდა.
 
 ---
 
@@ -64,8 +63,7 @@ Feature Cleaning განსაკუთრებით ეფექტურ�
 * 0.995
 * 0.98
 
-თუმცა შედეგებმა აჩვენა, რომ aggressive dominance filtering უმეტეს მოდელებზე უარყოფითად მოქმედებდა, განსაკუთრებით XGBoost-ზე.
-
+თუმცა შედეგებმა აჩვენა, რომ dominance filtering უმეტეს მოდელებზე უარყოფითად მოქმედებდა, შეაბამისად
 საბოლოოდ საუკეთესო შედეგი მივიღე მხოლოდ High Missing Cleaning-ის გამოყენებით.
 
 ---
@@ -91,12 +89,8 @@ Feature Cleaning განსაკუთრებით ეფექტურ�
 * One-Hot Encoding
 * WOE Encoding
 
-WOE Encoding გამოვცადე როგორც Logistic Regression-ზე, ასევე XGBoost-ზე.
-
-შედეგებმა აჩვენა, რომ:
-
-* Logistic Regression-ზე WOE-ს მნიშვნელოვანი გაუმჯობესება არ მოუტანია
-* XGBoost-ზე კი შედეგი პრაქტიკულად უცვლელი დარჩა
+ორივე გამოვცადე ყველა მოდელზე თუმცა ძირითადად One-Hot Encoding უკეთეს შედეგს გვაძლევდა, ჰიბრიდულმა
+encoding-მა XGBoost-ზე იგივენაირი შედეგი აჩვენა რაც One-Hot Encoding-მა
 
 ეს მიუთითებს, რომ tree-based boosting მოდელები თავად ახერხებენ კატეგორიული ინფორმაციის ეფექტურად გამოყენებას.
 
@@ -172,11 +166,8 @@ TransactionAmt - mean(TransactionAmt per UID)
 
 ## 1. Correlation Filter
 
-Correlation Filter გამოვიყენე Logistic Regression-ზე.
-
-Tree-based მოდელებზე correlation filtering არაეფექტური აღმოჩნდა.
-
-გარდა ამისა, correlation filtering საკმაოდ slow იყო დიდი რაოდენობის feature-ების გამო.
+Correlation Filter ვცადე მოდელთა უმეტესობაზე თუმცა ძალიან დიდი დრო მიჰქონდა და იქრაშებოდა kaggle ამიტომ
+აღარ მივაქციე ყურადღება
 
 ---
 
@@ -218,13 +209,21 @@ Logistic Regression გამოიყენებოდა როგორც b
 
 Logistic Regression-ზე Log Transaction Amount feature-მა მნიშვნელოვანი გაუმჯობესება მოიტანა.
 
-| Experiment        | Val ROC-AUC | Precision | Recall | F1    |
-| ----------------- | ----------- | --------- | ------ | ----- |
-| Baseline          | ~0.818      | 0.126     | 0.665  | 0.212 |
-| L2 Regularization | ~0.881      | 0.152     | 0.753  | 0.253 |
-| Log Transform     | ~0.879      | 0.149     | 0.751  | 0.249 |
+## Logistic Regression Experiments
 
----
+| Experiment | Encoding | Cleaning / Preprocessing | Feature Engineering | Feature Selection | Regularization | C | ROC-AUC | F1 Score | Precision | Recall | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Raw Baseline | OneHotEncoder | Minimal preprocessing | None | None | None | - | 0.7403 | 0.1223 | 0.0673 | 0.6685 | Initial baseline model |
+| L2 Regularization | OneHotEncoder | Minimal preprocessing | None | None | L2 | 0.1 | 0.7909 | 0.1644 | 0.0934 | 0.6872 | Large improvement over baseline |
+| L2 Regularization (Best Basic) | OneHotEncoder | Minimal preprocessing | None | None | L2 | 5 | 0.8181 | 0.2128 | 0.1267 | 0.6654 | Best result before feature engineering |
+| L1 Regularization | OneHotEncoder | Minimal preprocessing | None | None | L1 | 1 | 0.5774 | 0.1454 | 0.1002 | 0.2647 | Sparse model, weaker performance |
+| Cleaning High NaN Columns | OHE | Removed high-missing columns | None | None | L2 | 0.1 | 0.8123 | 0.2094 | 0.1248 | 0.6516 | Slight drop after aggressive cleaning |
+| Cleaning + Dominance Filtering | OHE | Removed high NaN & dominant cols | None | None | L2 | 0.1 | 0.8116 | 0.2091 | 0.1246 | 0.6487 | Similar to previous cleaning strategy |
+| WOE + OHE Encoding | WOE + OHE | Minimal preprocessing | None | None | L2 | 0.1 | 0.7377 | 0.1488 | 0.0855 | 0.5725 | Encoding combination underperformed |
+| Log Feature Engineering | OHE | Dominance + missing filtering | Log(amount) transform | None | L2 | 0.1 | 0.8809 | 0.2532 | 0.1522 | 0.7534 | Significant improvement after feature engineering |
+| Log Feature Engineering (Repeat) | OHE | Dominance + missing filtering | Log(amount) transform | None | L2 | 0.1 | 0.8793 | 0.2493 | 0.1495 | 0.7518 | Stable repeatable results |
+| L1 Feature Selection + Log FE | OHE | Dominance + missing filtering | Log(amount) transform | L1-based selection | L2 | 0.1 | 0.8756 | 0.2430 | 0.1452 | 0.7445 | Slight reduction after feature selection |
+
 
 ## Decision Tree
 
@@ -238,10 +237,18 @@ Decision Tree-მა საკმაოდ სწრაფად დაიწყ
 
 თუმცა Decision Tree მნიშვნელოვნად ჩამორჩა სხვა მოდელებს.
 
-| Experiment | Val ROC-AUC | Precision | Recall | F1   |
-| ---------- | ----------- | --------- | ------ | ---- |
-| Baseline   | ~0.80       | 0.18      | 0.72   | 0.29 |
-| Tuned Tree | ~0.87       | 0.17      | 0.75   | 0.28 |
+## Decision Tree Experiments
+
+| Experiment | Encoding | Cleaning / Preprocessing | Feature Engineering | Feature Selection | ROC-AUC | F1 Score | Precision | Recall |
+|---|---|---|---|---|---|---|---|---|
+| Raw Baseline | OneHotEncoder | Minimal preprocessing | None | None | 0.8011 | 0.4504 | 0.8273 | 0.3095 |
+| Tuned Baseline | OneHotEncoder | Minimal preprocessing | None | None | 0.8695 | 0.2832 | 0.1740 | 0.7595 |
+| WOE + OHE Encoding | WOE + OHE | Minimal preprocessing | None | None | 0.8693 | 0.2750 | 0.1675 | 0.7682 |
+| Cleaning High NaN + Dominance | OHE | Removed high-missing & dominant cols | None | None | 0.8699 | 0.2830 | 0.1739 | 0.7595 |
+| FE: UID | OHE | Minimal preprocessing | UID feature | None | 0.8698 | 0.2887 | 0.1784 | 0.7564 |
+| FE: Log Adder | OHE | Minimal preprocessing | Log-transformed feature | None | 0.8697 | 0.2832 | 0.1740 | 0.7597 |
+| RFE Feature Selection | OHE | Minimal preprocessing | None | RFE (100 features) | 0.8698 | 0.2817 | 0.1729 | 0.7609 |
+| Final Decision Tree | OHE | High missing + dominance filtering | None | None | **0.8706** | **0.2835** | **0.1742** | **0.7607** |
 
 ---
 
@@ -258,10 +265,18 @@ Random Forest-მა მნიშვნელოვნად გააუმჯ�
 
 Random Forest გახდა ბევრად უფრო სტაბილური და ნაკლებად overfit.
 
-| Experiment | Val ROC-AUC | Precision | Recall | F1    |
-| ---------- | ----------- | --------- | ------ | ----- |
-| Baseline   | ~0.884      | 0.189     | 0.726  | 0.300 |
-| Tuned RF   | ~0.911      | 0.328     | 0.693  | 0.445 |
+## Random Forest Experiments
+
+| Experiment | Encoding | Cleaning / Preprocessing | Feature Engineering | Max Depth | Trees | ROC-AUC | F1 Score | Precision | Recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RF Baseline | OHE | Minimal preprocessing | None | 12 | 200 | 0.8841 | 0.3007 | 0.1896 | 0.7263 |
+| RF Baseline (500 Trees) | OHE | Minimal preprocessing | None | 12 | 500 | 0.8847 | 0.3018 | 0.1902 | 0.7293 |
+| RF High Missing Cleaning | OHE | Removed high-missing columns | None | 12 | 500 | 0.8838 | 0.2989 | 0.1881 | 0.7273 |
+| RF High Dominance Cleaning | OHE | Removed dominant columns | None | 12 | 500 | 0.8838 | 0.2989 | 0.1881 | 0.7273 |
+| RF Tuned Depth 14 | OHE | Minimal preprocessing | None | 14 | 700 | 0.8942 | 0.3399 | 0.2221 | 0.7232 |
+| RF Tuned Depth 16 | OHE | Minimal preprocessing | None | 16 | 700 | 0.9030 | 0.3876 | 0.2663 | 0.7116 |
+| RF Tuned Depth 18 | OHE | Minimal preprocessing | None | 18 | 700 | 0.9111 | 0.4455 | 0.3282 | 0.6932 |
+| RF Feature Engineering (UID) | OHE | Minimal preprocessing | UID feature | 18 | 700 | **0.9121** | **0.4494** | **0.3328** | 0.6920 |
 
 ---
 
@@ -282,6 +297,20 @@ Boosting-ის საშუალებით მან შეძლო რთ�
 WOE Encoding-მა მნიშვნელოვანი გაუმჯობესება არ მოიტანა.
 
 RFE კი გახდა ყველაზე ეფექტური Feature Selection მეთოდი.
+
+## XGBoost Experiments
+
+| Experiment | Encoding | Cleaning / Preprocessing | Feature Engineering | Feature Selection | Learning Rate | Max Depth | Trees | ROC-AUC | F1 Score | Precision | Recall |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| XGB Baseline | OHE | Minimal preprocessing | None | None | 0.05 | 6 | 300 | 0.9291 | 0.5893 | 0.9140 | 0.4348 |
+| XGB Depth 5 LR 0.03 | OHE | Minimal preprocessing | None | None | 0.03 | 5 | 500 | 0.9199 | 0.5520 | 0.9018 | 0.3978 |
+| XGB Depth 6 LR 0.05 | OHE | Minimal preprocessing | None | None | 0.05 | 6 | 500 | 0.9387 | 0.6248 | 0.9276 | 0.4711 |
+| XGB Regularized | OHE | Minimal preprocessing | None | None | 0.05 | 6 | 500 | 0.9368 | 0.6176 | 0.9171 | 0.4655 |
+| XGB High Missing + Dominance Cleaning | OHE | Removed high-missing & dominant cols | None | None | 0.05 | 6 | 500 | 0.9403 | 0.6248 | 0.9255 | 0.4716 |
+| XGB Log Amount Feature | OHE | Minimal preprocessing | Log(amount) | None | 0.05 | 6 | 500 | 0.9390 | 0.6256 | 0.9243 | 0.4728 |
+| XGB UID Features | OHE | Minimal preprocessing | UID-based features | None | 0.05 | 6 | 500 | 0.9411 | 0.6267 | 0.9228 | 0.4745 |
+| XGB Feature Selection (RFE) | OHE | Minimal preprocessing | UID features | RFE | 0.05 | 6 | 500 | **0.9427** | **0.6385** | **0.9247** | **0.4875** |
+| XGB WOE + OHE | OHE + WOE | Minimal preprocessing | UID features | RFE | 0.05 | 6 | 500 | **0.9427** | **0.6385** | **0.9247** | **0.4875** |
 
 ---
 
@@ -393,5 +422,7 @@ XGBoost + UIDAmountDeviation + RFE
 ```
 
 რომელიც გახდა პროექტის საბოლოო მოდელი.
+
+🔗 [https://dagshub.com/](https://dagshub.com/izere23/Assignment-2-IEEE-CIS-Fraud-Detection.mlflow)
 
 <img width="1370" height="162" alt="image" src="https://github.com/user-attachments/assets/eaed7c41-bf6a-4dcc-9704-0aeaebac7630" />
