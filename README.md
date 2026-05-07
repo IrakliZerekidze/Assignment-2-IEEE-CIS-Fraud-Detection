@@ -18,6 +18,17 @@
 ```
 ---
 
+## პროექტის სტრუქტურა
+
+| ფაილი | აღწერა |
+|---|---|
+| `model-experiment-decision-tree.ipynb` | Decision Tree მოდელის ექსპერიმენტები და ჰიპერპარამეტრების ტესტირება, preprocessing-ის, cleaning-ის და feature engineering-ის სხვადასხვა მიდგომებით. |
+| `model-experiment-logistic-regression.ipynb` | Logistic Regression მოდელის ექსპერიმენტები რეგულარიზაციის, encoding-ის, feature engineering-ის და feature selection-ის სხვადასხვა მეთოდებით. |
+| `model-experiment-random-forest.ipynb` | Random Forest მოდელის ტრენინგი და ტესტირება სხვადასხვა depth-ის, estimator-ის და preprocessing-ის პარამეტრებით. |
+| `model-experiment-xgboost.ipynb` | XGBoost მოდელის ექსპერიმენტები, პარამეტრების tuning-ი, feature engineering და feature selection მეთოდების გამოყენებით. |
+| `model-inference.ipynb` | საბოლოო inference pipeline, რომელიც გამოიყენება გაწვრთნილი მოდელების ჩასატვირთად და test მონაცემებზე პროგნოზების გასაკეთებლად. |
+| `README.md` | პროექტის დოკუმენტაცია, ექსპერიმენტების აღწერა, შედეგები და გამოყენების ინსტრუქცია. |
+
 ## Pipeline Overview
 
 ```
