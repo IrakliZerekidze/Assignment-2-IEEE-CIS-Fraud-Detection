@@ -9,16 +9,13 @@
 ## რეპოზიტორიის სტრუქტურა
 
 ```
-├── model-experiment.ipynb     ← EDA, preprocessing, ექსპერიმენტები
-├── model-inference.ipynb      ← საუკეთესო მოდელის ჩატვირთვა, inference, submission
+├── model-experiment-decision-tree.ipynb    
+├── model-experiment-logistic-regression.ipynb
+├── model-experiment-random-forest.ipynb     
+├── model-experiment-xgboost.ipynb     
+├── model-inference.ipynb
 └── README.md
 ```
-
-| ფაილი                    | აღწერა                                                                            |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| `model-experiment.ipynb` | მთავარი notebook EDA-სთვის, preprocessing-ისთვის და მოდელების ექსპერიმენტებისთვის |
-| `model-inference.ipynb`  | MLflow-იდან საუკეთესო pipeline-ის ჩატვირთვა და Kaggle submission-ის გენერაცია     |
-
 ---
 
 ## Pipeline Overview
